@@ -19,8 +19,8 @@
 
 ## Screenshots
 
-| Registration | Login | Welcome |
-|--------------|-------|---------|
+| Registration | Verification | Welcome |
+|--------------|--------------|-------------|
 | ![register](screenshots/login.png) | ![login](screenshots/verification.png) | ![welcome](screenshots/welcome.png) |
 
 ## Why I Built This
