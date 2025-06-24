@@ -19,7 +19,7 @@
 
 ## Screenshots
 
-| Registration | Verification | Welcome |
+| Registration | Validation | Welcome |
 |--------------|--------------|-------------|
 | ![register](screenshots/login.png) | ![login](screenshots/verification.png) | ![welcome](screenshots/welcome.png) |
 
