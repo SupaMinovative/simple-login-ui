@@ -1,17 +1,19 @@
 package com.minovative.simpleloginapp;
 
+import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 
 @Entity(primaryKeys = {"email"})
 public class User {
 
+    @NonNull
     @ColumnInfo(name ="email")
     private String email;
     @ColumnInfo(name = "password")
-    private int password;
+    private String password;
 
-    public User(String email,int password) {
+    public User(String email,String password) {
         this.email = email;
         this.password = password;
     }
@@ -24,11 +26,11 @@ public class User {
         this.email = email;
     }
 
-    public int getPassword( ) {
+    public String getPassword( ) {
         return password;
     }
 
-    public void setPassword(int password) {
+    public void setPassword(String password) {
         this.password = password;
     }
 }

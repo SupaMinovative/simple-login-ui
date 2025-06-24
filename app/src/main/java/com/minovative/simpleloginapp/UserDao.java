@@ -11,8 +11,8 @@ import java.util.List;
 @Dao
 public interface UserDao {
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insertUser(User user);
     @Query("SELECT * FROM user WHERE email =:email AND password =:password")
-    List<User> getAllUser(String email,int password);
+    List<User> getAllUser(String email,String password);
 }

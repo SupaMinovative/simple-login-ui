@@ -1,7 +1,7 @@
 package com.minovative.simpleloginapp;
 
+import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -11,6 +11,8 @@ import android.widget.TextView;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
+
+import java.util.List;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
@@ -35,6 +37,10 @@ public class MainActivity extends AppCompatActivity {
     private String reUserName;
     private String password;
     private String rePassword;
+    private AppDatabase db;
+    private UserDao userDao;
+
+    List<User> userOnDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,87 +63,162 @@ public class MainActivity extends AppCompatActivity {
         welcomePage = findViewById(R.id.welcomePage);
         usernameShow = findViewById(R.id.usernameShow);
 
+        db = AppDatabase.getInstance(this);
+        userDao = db.userDao();
+
         signupBtn.setOnClickListener(v -> {
+
             loginTextView.setText("REGISTER");
             reEmailText.setVisibility(View.VISIBLE);
             rePassText.setVisibility(View.VISIBLE);
             regBtn.setVisibility(View.VISIBLE);
             loginBtn.setVisibility(View.GONE);
             regOpt.setVisibility(View.GONE);
-
         });
-
 
         regBtn.setOnClickListener(v -> {
 
-            if(emailText.getText().toString().trim()
-                    .equals(reEmailText.getText().toString().trim())) {
-                userName = String.valueOf(emailText.getText());
-                reUserName = String.valueOf(reEmailText.getText());
-            } else {
-                errorText.setVisibility(View.VISIBLE);
-                errorText.setText("Email doesn't match. Please try again.");
+            userName = emailText.getText().toString().trim();
+            reUserName = reEmailText.getText().toString().trim();
+            password = passText.getText().toString().trim();
+            rePassword = rePassText.getText().toString().trim();
 
-                new android.os.Handler().postDelayed(() -> {
-                    errorText.setText("");
-                }, 2500);
-                reEmailText.setText("");
+            if (!userName.equals(reUserName)) {
+
+                setErrorText(errorText,"Email doesn't match. Please try again.");
+                setEmptyText(reEmailText);
+                return;
             }
 
-                if (passText.getText().toString().trim().equals(rePassText.getText().toString().trim())) {
-                    password = String.valueOf(passText.getText());
-                    rePassword = String.valueOf(passText.getText());
-                }   else {
-                    passErrorText.setVisibility(View.VISIBLE);
-                    passErrorText.setText("Password doesn't match. Please try again.");
+            if (!password.equals(rePassword)) {
+                setErrorText(passErrorText,"Password doesn't match. Please try again.");
+                setEmptyText(rePassText);
+                return;
 
-                    new android.os.Handler().postDelayed(( ) -> {
-                        passErrorText.setText("");
-                    },2500);
-                    rePassText.setText("");
-                };
-                new android.os.Handler().postDelayed(() -> {
-                    errorText.setText("");
-                }, 2500);
+            } else if (password.isEmpty() && rePassword.isEmpty() || userName.isEmpty() && reUserName.isEmpty()) {
+                setErrorText(errorText,"Field is required");
+                return;
+            }
 
-                if(userName.isEmpty() && reUserName.isEmpty()
-                && password.isEmpty() && rePassword.isEmpty()) {
-                    errorText.setVisibility(View.VISIBLE);
-                    errorText.setText("Field is required");
+            new Thread(( ) -> {
+                userOnDb = userDao.getAllUser(userName,password);
+                boolean exists = false;
 
-                    new android.os.Handler().postDelayed(( ) -> {
-                        errorText.setText("");
-                    },2500);
-                } else if (userName.equals(reUserName) && Objects.equals(password,rePassword)) {
-                    Log.d("DEBUG", "username: " + userName + "password: " + password);
-                        loginTextView.setText("WELCOME");
-                        emailText.setVisibility(View.GONE);
-                        reEmailText.setVisibility(View.GONE);
-                        passText.setVisibility(View.GONE);
-                        rePassText.setVisibility(View.GONE);
-                        regCon.setVisibility(View.VISIBLE);
-                        regCon.setText("You're already registered. Please log in to your account.");
+                for (User user : userOnDb){
+                    if (userName.equals(user.getEmail())) {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (exists) {
+
+                    runOnUiThread(( ) -> {
+                        removeView();
+                        setEmptyText(loginTextView);
+                        setEmptyText(emailText);
+                        setEmptyText(passText);
+                        emailText.setText("");
+                        passText.setText("");
+                        regCon.setText("You already have an account. Please login.");
                         regBtn.setVisibility(View.GONE);
                         loginBtn.setVisibility(View.VISIBLE);
+                    });
+                }
 
-                    }
+                if (!exists) {
+                    User newUser = new User(userName,password);
+                    userDao.insertUser(newUser);
+                }
+            }).start();
+
+                new android.os.Handler().postDelayed(( ) -> {
+
+                    setEmptyText(errorText);
+
+                },2500);
+
+             if (userName.equals(reUserName) && Objects.equals(password,rePassword)) {
+                removeView();
+                emailText.setText("");
+                passText.setText("");
+                loginTextView.setText("WELCOME");
+                regCon.setVisibility(View.VISIBLE);
+                regCon.setText("Registered successfully! You can now log in to your account.");
+                regBtn.setVisibility(View.GONE);
+                loginBtn.setVisibility(View.VISIBLE);
+            }
         });
 
         loginBtn.setOnClickListener(v -> {
-
             loginTextView.setText("LOGIN");
             emailText.setVisibility(View.VISIBLE);
             passText.setVisibility(View.VISIBLE);
-            passErrorText.setText("");
-            passErrorText.setVisibility(View.GONE);
-            userName = String.valueOf(emailText.getText());
-            password = String.valueOf(passText.getText());
-            loginForm.setVisibility(View.GONE);
-            welcomePage.setVisibility(View.VISIBLE);
-            usernameShow.setText(userName);
+            regCon.setVisibility(View.GONE);
+            regBtn.setVisibility(View.GONE);
 
+            String loginEmail = emailText.getText().toString().trim();
+            String loginPass = passText.getText().toString().trim();
+
+
+                if (loginEmail.isEmpty() && loginPass.isEmpty()) {
+                    return;
+                }
+
+            new Thread(( ) -> {
+
+                userOnDb = userDao.getAllUser(loginEmail,loginPass);
+
+                runOnUiThread(( ) -> {
+                    boolean isCorrect = false;
+
+                    for (User user : userOnDb){
+
+                        if (loginEmail.equals(user.getEmail()) && loginPass.equals(user.getPassword())) {
+                            isCorrect = true;
+                            break;
+                        }
+                    }
+                    if (isCorrect) {
+
+                        userName = String.valueOf(emailText.getText());
+                        password = String.valueOf(passText.getText());
+                        welcomePage.setVisibility(View.VISIBLE);
+                        emailText.setVisibility(View.VISIBLE);
+                        passText.setVisibility(View.VISIBLE);
+                        setEmptyText(passErrorText);
+                        passErrorText.setVisibility(View.GONE);
+                        loginForm.setVisibility(View.GONE);
+                        usernameShow.setText(userName);
+
+                    }
+                    else {
+                        setErrorText(errorText,"Email or password is incorrect. Please try again.");
+                    }
+                });
+            }).start();
         });
+    }
+    public void removeView() {
+        emailText.setVisibility(View.GONE);
+        reEmailText.setVisibility(View.GONE);
+        passText.setVisibility(View.GONE);
+        rePassText.setVisibility(View.GONE);
+    }
 
+    public void setErrorText(TextView t, String str) {
 
+            t.setVisibility(View.VISIBLE);
+            t.setText(str);
+
+            new android.os.Handler().postDelayed(( ) -> {
+
+                setEmptyText(t);
+
+            },2000);
+        }
+
+    public void setEmptyText(TextView t) {
+        t.setText("");
     }
 }
