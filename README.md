@@ -28,4 +28,4 @@
 I created this app to solidify my understanding of user authentication, data persistence, and UI state handling in Android. The goal is to connect and apply the core concepts I’ve learned so far **before transitioning to web-based development using Spring Boot and PostgreSQL**. This project helps me deepen my logic and architectural thinking in preparation for more complex backend systems.
 
 > ⚠️ **Disclaimer**: This app is for learning purposes only and is not intended for production use without significant security enhancements.
-``
+
